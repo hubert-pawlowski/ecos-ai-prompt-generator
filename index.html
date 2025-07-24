@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-50">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EcoS AI Prompt-Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .input-field { background-color: white; color: #111827; }
+    label.block.font-medium { font-size: 1.0625rem; font-weight: 500; }
+    .char-count { font-size: 0.8125rem; font-weight: 500; display: block; margin-bottom: 0.5rem; }
+    .instruction-text { font-size: 0.9375rem; }
+    .input-field.error { border-color: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.25); }
+    .section { margin-bottom: 2rem; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen font-sans">
+  <div class="max-w-3xl mx-auto p-6 space-y-6">
+
+    <h1 class="text-3xl font-bold">EcoS AI Prompt-Generator</h1>
+    <p class="mb-3 instruction-text text-gray-700">
+      <strong>Instructions:</strong><br>
+      Choose your current research development phase below, insert the relevant information into the input fields, and generate a customized prompt. Copy the result and use it with any large language model (ChatGPT, Claude, Gemini, etc.) to get targeted feedback on your work.
+    </p>
+    <button id="info-btn" type="button" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-xl hover:bg-gray-300">Frequently Asked Questions</button>
+
+    <!-- Single dropdown with Testing option -->
+    <div>
+      <label for="modeSelect" class="block font-medium mb-1">Research development phase</label>
+      <select id="modeSelect"
+              class="w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500">
+        <option value="rq">1. Topic and Research Question</option>
+        <option value="relevance">2. Relevance of the Research Question</option>
+        <option value="lit-structure">3. Literature Review Structure</option>
+        <option value="analytical-framework">4. Literature Review and Analytical Framework</option>
+        <option value="formal-aspects">5. Formal Aspects</option>
+      </select>
+    </div>
+
+    <!-- Official: RQ -->
+    <div id="rq-section" class="section space-y-6 hidden">
+      <div>
+        <label class="block font-medium">Project Type</label>
+        <div class="space-y-1 ml-4">
+          <label class="block"><input type="radio" name="project-type" value="thesis" class="mr-1" checked>Master's thesis</label>
+          <label class="block"><input type="radio" name="project-type" value="term" class="mr-1">Term paper</label>
+        </div>
+      </div>
+      <div>
+        <label id="title-label" class="block font-medium">Title of the Thesis</label>
+        <input id="title" type="text" maxlength="500"
+               class="input-field w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500"/>
+        <div id="title-count" class="char-count text-gray-500">0 / 500</div>
+      </div>
+      <div>
+        <label class="block font-medium">Research Question</label>
+        <input id="research-question" type="text" maxlength="500"
+               class="input-field w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500"/>
+        <div id="rq-count" class="char-count text-gray-500">0 / 500</div>
+      </div>
+    </div>
+
+    <!-- Official: Relevance -->
+    <div id="relevance-section" class="section space-y-6 hidden">
+      <div>
+        <label class="block font-medium">Research Question</label>
+        <input id="relevance-rq" type="text" maxlength="500"
+               class="input-field w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500"/>
+        <div id="relevance-rq-count" class="char-count text-gray-500">0 / 500</div>
+      </div>
+      <div>
+        <label class="block font-medium mb-1">How would you like to provide your relevance analysis?</label>
+        <div class="space-y-1 ml-4">
+          <label class="block"><input type="radio" name="relevance-input-mode" value="fields" class="mr-1" checked>Fill out structured fields</label>
+          <label class="block"><input type="radio" name="relevance-input-mode" value="text" class="mr-1">Paste entire table as text</label>
+        </div>
+        <p id="relevance-text-reminder" class="hidden instruction-text bg-yellow-100 text-yellow-700 p-2 rounded mt-2">
+          Note that pasting your entire relevance table may affect formatting. Pay attention that your submission remains complete and correctly structured. For more reliable results, filling out the structured fields is recommended.
+        </p>
+      </div>
+      <div id="relevance-stakeholder-fields">
+        <div id="relevance-stakeholders" class="space-y-6"></div>
+        <div class="flex gap-2">
+          <button id="add-stakeholder-btn" type="button"
+                  class="flex-1 bg-gray-200 p-2 rounded-xl hover:bg-gray-300">+ Add stakeholder</button>
+          <button id="remove-stakeholder-btn" type="button"
+                  class="flex-1 bg-red-200 p-2 rounded-xl hover:bg-red-300 hidden">– Remove last stakeholder</button>
+        </div>
+      </div>
+      <div id="relevance-textfield" class="space-y-2 hidden">
+        <label class="block font-medium">Relevance Table</label>
+        <textarea id="relevance-text" rows="6" maxlength="50000"
+                  class="input-field w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500"></textarea>
+        <div id="relevance-text-count" class="char-count text-gray-500">0 / 50000</div>
+      </div>
+    </div>
+
+    <!-- 3. Official Literature Review Structure -->
+    <div id="lit-structure-section" class="section space-y-6 hidden">
+      <div>
+        <label class="block font-medium">Research Question</label>
+        <input id="lit-structure-rq" type="text" maxlength="500"
+               class="input-field w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500"/>
+        <div id="lit-structure-rq-count" class="char-count text-gray-500">0 / 500</div>
+      </div>
+      <div>
+        <label class="block font-medium">How would you like to provide your literature review structure?</label>
+        <div class="space-y-1 ml-4">
+          <label class="block"><input type="radio" name="ls-input-mode" value="fields" class="mr-1" checked>Fill out structured fields</label>
+          <label class="block"><input type="radio" name="ls-input-mode" value="text" class="mr-1">Paste full structure as text</label>
+        </div>
+        <p id="ls-text-reminder" class="hidden instruction-text bg-yellow-100 text-yellow-700 p-2 rounded mt-2">
+          Note that pasting your full literature review structure may affect formatting. Pay attention that your submission remains complete and correctly structured. For more reliable results, filling out the structured fields is recommended.
+        </p>
+      </div>
+      <div id="lit-structure-fieldset">
+        <div id="lit-structure-issues" class="space-y-6"></div>
+        <div class="flex gap-2">
+          <button id="add-issue-btn" type="button"
+                  class="flex-1 bg-gray-200 p-2 rounded-xl hover:bg-gray-300">+ Add issue</button>
+          <button id="remove-issue-btn" type="button"
+                  class="flex-1 bg-red-200 p-2 rounded-xl hover:bg-red-300 hidden">– Remove last issue</button>
+        </div>
+      </div>
+      <div id="lit-structure-textfield" class="space-y-2 hidden">
+        <label class="block font-medium">Literature Review Structure</label>
+        <textarea id="lit-structure-text" rows="6" maxlength="50000"
+                  class="input-field w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500"></textarea>
+        <div id="lit-structure-text-count" class="char-count text-gray-500">0 / 50000</div>
+      </div>
+    </div>
+
+    <!-- Official: Analytical Framework -->
+    <div id="analytical-framework-section" class="section space-y-6 hidden">
+      <div>
+        <label class="block font-medium">Research Question</label>
+        <input id="analytical-framework-rq" type="text" maxlength="500"
+               class="input-field w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500"/>
+        <div id="analytical-framework-rq-count" class="char-count text-gray-500">0 / 500</div>
+      </div>
+      <div>
+        <label class="block font-medium">How would you like to provide your literature review and analytical framework?</label>
+        <div class="space-y-1 ml-4">
+          <label class="block"><input type="radio" name="af-input-mode" value="text" class="mr-1" checked>Enter text directly</label>
+          <label class="block"><input type="radio" name="af-input-mode" value="file" class="mr-1">Upload file separately when using AI</label>
+        </div>
+      </div>
+      <div id="analytical-framework-textfields" class="space-y-2">
+        <label class="block font-medium">Literature Review</label>
+        <textarea id="analytical-framework-lit-review" rows="4" maxlength="50000"
+                  class="input-field w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500"></textarea>
+        <div id="analytical-framework-lit-review-count" class="char-count text-gray-500">0 / 50000</div>
+        <label class="block font-medium">Analytical Framework</label>
+        <textarea id="analytical-framework" rows="6" maxlength="50000"
+                  class="input-field w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500"></textarea>
+        <div id="analytical-framework-count" class="char-count text-gray-500">0 / 50000</div>
+      </div>
+      <div id="analytical-framework-file-reminder" class="hidden instruction-text bg-blue-100 text-blue-700 p-2 rounded">
+        Remember to upload your document(s) alongside the generated prompt when using your AI chatbot.
+      </div>
+    </div>
+
+    <!-- Formal Aspects -->
+    <div id="formal-aspects-section" class="section space-y-6 hidden">
+      <p class="instruction-text">
+        You can use this prompt to have AI check your submission's formal formatting. Use it with any AI chatbot by uploading your document (ideally in PDF) alongside this prompt. You may remove personal information from your cover page before uploading, though your final submission must include a complete cover page.
+      </p>
+    </div>
+
+    <!-- Generate Prompt & Output -->
+    <div class="space-y-4">
+      <button id="submit-btn" class="w-full bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition">Generate Prompt</button>
+      <button id="copy-btn" class="w-full bg-green-600 text-white p-3 rounded-xl hover:bg-green-700 transition hidden">Copy to Clipboard</button>
+      <div id="status-msg" class="text-center text-red-700 text-sm font-medium hidden">New prompt has been generated.</div>
+      <div id="result" class="whitespace-pre-wrap bg-white p-4 border border-gray-300 rounded-xl text-sm hidden"></div>
+    </div>
+
+  </div>
+
+  <!-- Info Overlay -->
+  <div id="info-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 hidden">
+    <div class="bg-white p-6 pt-0 rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative space-y-4">
+      <div class="sticky top-0 bg-white flex justify-end z-20 py-2">
+        <button id="info-close" type="button" class="m-2 px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300">Close</button>
+      </div>
+      <h1 class="text-2xl font-bold mt-2">Frequently Asked Questions</h1>
+      <div class="space-y-4">
+        <div class="border-b pb-2 faq-item">
+          <h2 class="faq-question cursor-pointer font-semibold text-lg bg-white sticky top-12 py-3 z-10">What exactly does this prompt generator do?</h2>
+          <div class="faq-answer hidden space-y-2">
+            <p>This tool provides carefully crafted artificial intelligence (AI) prompts that encode how we approach research design and structure at EcoS, allowing you to use any AI large language model (LLM) to receive program-specific feedback before you submit your research project assignments the professors.</p>
+            <p>The key difference from generic AI interactions lies in specificity and testing. When you ask an AI chatbot a general question like "Is my research question good?", the response you will receive will be based on the AI’s own assessment, which has no clear foundation of what actually constitutes a ‘good’ research question. Our prompts, on the other hand, specify exactly what to look for and how to evaluate each components of the research project development process by channeling the AI's pattern-matching capabilities toward our specific program requirements.</p>
+            <p>We spent extensive time developing and refining these prompts, testing various versions to ensure they generate useful, program-relevant responses rather than generic feedback. We decided to take this prompt-approach because it is future-proof and versatile—as AI technology evolves, you can use these prompts with any emerging AI model and get feedback that aligns with our academic standards.</p>
+            <p></p>
+          </div>
+        </div>
+
+        <div class="border-b pb-2 faq-item">
+          <h2 class="faq-question cursor-pointer font-semibold text-lg bg-white sticky top-12 py-3 z-10">Why was this tool created?</h2>
+          <div class="faq-answer hidden space-y-2">
+            <p>We developed this tool as an educational resource for EcoS students, recognizing that AI has already transformed academic work and many students are using various AI tools. Rather than leaving students to navigate AI feedback without guidance, we wanted to channel that usage in a productive, program-specific direction.</p>
+            <p>The goal is not to do your intellectual work for you, but to help ensure your research serves your intellectual goals while aligning with sound methodological principles. We believe that by providing access to this type of AI assistance, we not only create something useful but also something that will benefit all students equally, regardless of their prior experience using AI LLMs.</p>
+            <p></p>
+          </div>
+        </div>
+
+        <div class="border-b pb-2 faq-item">
+          <h2 class="faq-question cursor-pointer font-semibold text-lg bg-white sticky top-12 py-3 z-10">Do professors expect me to use this tool?</h2>
+          <div class="faq-answer hidden space-y-2">
+            <p>No, you are not required to use these prompts. You can still develop your research projects by using existing guidance materials and ask for direct feedback from professors. However, we developed these prompts because we saw an opportunity to harness emerging technology for genuine educational benefit—providing round-the-clock feedback that democratizes access to detailed academic support.</p>
+            <p>Professors will still expect you to demonstrate deep understanding in consultations, presentations, and thesis defenses. The prompts help you prepare for these interactions by ensuring your work meets basic requirements, allowing discussions with professors to focus on substantive theoretical nuances and methodological considerations that require genuine expertise.</p>
+            <p></p>
+          </div>
+        </div>
+
+        <div class="border-b pb-2 faq-item">
+          <h2 class="faq-question cursor-pointer font-semibold text-lg bg-white sticky top-12 py-3 z-10">How will this improve the process of developing my research project?</h2>
+          <div class="faq-answer hidden space-y-2">
+            <p>These prompts help you catch fundamental requirement issues early and avoid unproductive research directions, allowing you to focus energy on original thinking and rigorous analysis. By identifying potential problems before you have invested significant time, you can redirect efforts toward more promising directions—particularly valuable during early research stages when adjustments are still feasible.</p>
+            <p>Beyond generating assessments, you can ask follow-up questions about feedback, request explanations of concepts you do not understand, and use AI to clarify methodological considerations. When your work already meets basic requirements and demonstrates manageability, you can dedicate consultation time with professors to sophisticated research aspects that require genuine understanding and experience.</p>
+            <p></p>
+          </div>
+        </div>
+
+        <div class="border-b pb-2 faq-item">
+          <h2 class="faq-question cursor-pointer font-semibold text-lg bg-white sticky top-12 py-3 z-10">What is the most effective approach to using these prompts?</h2>
+          <div class="faq-answer hidden space-y-2">
+            <p>We have identified several key practices that will optimize your experience with this tool:</p>
+            <p><strong>Start early in your development process</strong> rather than using this as a last-minute check. If you discover fundamental issues right before a submission deadline, you will not have time to address them properly. Remember—this is <em>your</em> research project, and the goal is to improve <em>your understanding</em> of how to best approach it, and not simply generate solutions that satisfy an AI system.</p>
+            <p><strong>Engage critical thinking throughout the process.</strong> AI is not perfect, and although these prompts have been tested thoroughly, the feedback generated can vary. Make sure that when you prepare your initial drafts you genuinely understand your core ideas, and then use the generated feedback as a starting point for deeper reflection about your work rather than definitive judgment. Remember that the goal is enhancement, not replacement.</p>
+            <p><strong>Take advantage of AI's broader capabilities</strong> beyond evaluating submissions. Given the general capabilities of AI, you can ask follow-up questions about specific feedback, request explanations of concepts you do not understand, or request to engage in your preferred language if English is not native to you.</p>
+            <p><strong>Prepare for professor consultations</strong> by using feedback to ensure your work meets basic requirements and demonstrates general manageability. Do not get too focused on the specifics of the AI feedback. Remember that you can (and should!) discuss any uncertainties about specifics with professors who have the necessary experience in both supervising and writing research papers. In fact, given AI’s structural limitations, judgments about the bigger picture of your research projects require contextual reasoning and genuine understanding that only experienced researchers can provide.</p>
+            <p></p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <h2 class="faq-question cursor-pointer font-semibold text-lg bg-white sticky top-12 py-3 z-10">How do I know if I can trust the AI feedback I get?</h2>
+          <div class="faq-answer hidden space-y-2">
+            <p>It is crucial to understand that AI generates text based on patterns from training data—it does not actually "know" anything the way humans do. When AI evaluates your work, it makes probability-based predictions about likely responses rather than systematically analyzing like a real researcher would. So, for instance, if you ask AI whether there is 'enough' literature on a certain research topic, it might confidently confirm, although it doesn't perform an actual survey of databases or systematic evaluation.</p>
+            <p>Even with carefully crafted prompts, different AI tools can provide varying assessments of identical work, and the same tool can generate different feedback in new sessions. This means you should never simply accept or reject AI feedback without consideration. Instead, use it as stimulus to better understand and critically examine your own work.</p>
+            <p>The value lies in the reflection process the feedback encourages, not in AI's specific conclusions. If feedback seems wrong or unhelpful, that's an opportunity to think more deeply about whether aspects of your work could be clearer or stronger. But don’t let it discourage you. Trust your own judgment, but let feedback prompt you to consider perspectives you might not have examined independently.</p>
+            <p></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const modeSelect = document.getElementById('modeSelect');
+    const sections   = {
+      rq: document.getElementById('rq-section'),
+      relevance: document.getElementById('relevance-section'),
+      'lit-structure': document.getElementById('lit-structure-section'),
+      'analytical-framework': document.getElementById('analytical-framework-section'),
+      'formal-aspects': document.getElementById('formal-aspects-section')
+    };
+      const resultDiv  = document.getElementById('result');
+      const copyBtn    = document.getElementById('copy-btn');
+      const submitBtn  = document.getElementById('submit-btn');
+      const statusMsg  = document.getElementById('status-msg');
+      let statusTimeout;
+    const infoBtn    = document.getElementById('info-btn');
+    const infoOverlay= document.getElementById('info-overlay');
+    const infoClose  = document.getElementById('info-close');
+    infoBtn.addEventListener('click', () => infoOverlay.classList.remove('hidden'));
+    infoClose.addEventListener('click', () => infoOverlay.classList.add('hidden'));
+    document.querySelectorAll('.faq-question').forEach(q => {
+      q.addEventListener('click', () => {
+        const ans = q.nextElementSibling;
+        if (ans) ans.classList.toggle('hidden');
+      });
+    });
+
+    const titleLabel = document.getElementById('title-label');
+    function updateTitleLabel(){
+      const type = document.querySelector('input[name="project-type"]:checked').value;
+      titleLabel.textContent = type === 'term' ? 'Title of the Term Paper' : 'Title of the Thesis';
+    }
+    document.querySelectorAll('input[name="project-type"]').forEach(r=>r.addEventListener('change', updateTitleLabel));
+    updateTitleLabel();
+
+      // Toggle AF input mode
+      const afTextFields = document.getElementById('analytical-framework-textfields');
+      const afReminder   = document.getElementById('analytical-framework-file-reminder');
+      document.querySelectorAll('input[name="af-input-mode"]').forEach(r=>r.addEventListener('change',()=>{
+        const fileMode = document.querySelector('input[name="af-input-mode"]:checked').value === 'file';
+        afTextFields.classList.toggle('hidden', fileMode);
+        afReminder.classList.toggle('hidden', !fileMode);
+      }));
+
+      // Toggle Relevance and Literature Review Structure input modes
+      const relevanceFields   = document.getElementById('relevance-stakeholder-fields');
+      const relevanceText     = document.getElementById('relevance-textfield');
+      const relevanceWarning  = document.getElementById('relevance-text-reminder');
+      document.querySelectorAll('input[name="relevance-input-mode"]').forEach(r=>r.addEventListener('change',()=>{
+        const txtMode = document.querySelector('input[name="relevance-input-mode"]:checked').value === 'text';
+        relevanceFields.classList.toggle('hidden', txtMode);
+        relevanceText.classList.toggle('hidden', !txtMode);
+        relevanceWarning.classList.toggle('hidden', !txtMode);
+        if(!txtMode) updateStakeholderRemoveBtn();
+      }));
+      const lsFields   = document.getElementById('lit-structure-fieldset');
+      const lsText     = document.getElementById('lit-structure-textfield');
+      const lsWarning  = document.getElementById('ls-text-reminder');
+      document.querySelectorAll('input[name="ls-input-mode"]').forEach(r=>r.addEventListener('change',()=>{
+        const txtMode = document.querySelector('input[name="ls-input-mode"]:checked').value === 'text';
+        lsFields.classList.toggle('hidden', txtMode);
+        lsText.classList.toggle('hidden', !txtMode);
+        lsWarning.classList.toggle('hidden', !txtMode);
+        if(!txtMode) updateRemoveBtn();
+      }));
+
+      // Set initial state for input mode toggles
+      const afFileInitial = document.querySelector('input[name="af-input-mode"]:checked').value === 'file';
+      afTextFields.classList.toggle('hidden', afFileInitial);
+      afReminder.classList.toggle('hidden', !afFileInitial);
+      const relTextInitial = document.querySelector('input[name="relevance-input-mode"]:checked').value === 'text';
+      relevanceFields.classList.toggle('hidden', relTextInitial);
+      relevanceText.classList.toggle('hidden', !relTextInitial);
+      relevanceWarning.classList.toggle('hidden', !relTextInitial);
+      const lsTextInitial = document.querySelector('input[name="ls-input-mode"]:checked').value === 'text';
+      lsFields.classList.toggle('hidden', lsTextInitial);
+      lsText.classList.toggle('hidden', !lsTextInitial);
+      lsWarning.classList.toggle('hidden', !lsTextInitial);
+
+    async function loadTemplate(name){
+      const map = {
+        'relevance-text': 'relevance',
+        'lit-structure-text': 'lr-structure',
+        'lit-structure': 'lr-structure',
+        'analytical-framework-file': 'lr-af',
+        'analytical-framework': 'lr-af'
+      };
+      const file = map[name] || name;
+      const resp = await fetch(`prompts/${file}.txt`);
+      return resp.text();
+    }
+    function fillTemplate(tmpl,data){
+      return tmpl.replace(/{{(\w+)}}/g, (_, k) => data[k] || "");
+    }
+
+    function clearErrors(){
+      document.querySelectorAll('.input-field').forEach(el=>el.classList.remove('error'));
+    }
+    function showError(el){ if(el) el.classList.add('error'); }
+
+    document.addEventListener('input', e => {
+      if(e.target.classList && e.target.classList.contains('input-field')) {
+        e.target.classList.remove('error');
+      }
+    });
+
+    function buildStudentInput(mode,data){
+      let parts = [];
+      if(mode==='rq' || mode==='rq-term-paper'){
+        parts.push('<ProposedTitle>');
+        parts.push(data.title || '');
+        parts.push('</ProposedTitle>');
+        parts.push('');
+        parts.push('<ResearchQuestion>');
+        parts.push(data.question || '');
+        parts.push('</ResearchQuestion>');
+        } else if(mode==='relevance'){
+          parts.push('<ResearchQuestion>');
+          parts.push(data.question || '');
+          parts.push('</ResearchQuestion>');
+          (data.stakeholders || []).forEach((it,i)=>{
+            const n=i+1;
+            parts.push('');
+            parts.push(`<Stakeholder${n}>`);
+            parts.push(`<Name>${it.name || ''}</Name>`);
+            parts.push(`<Interest>${it.reasons || ''}</Interest>`);
+            parts.push(`<Evidence>${it.evidence || ''}</Evidence>`);
+            parts.push(`</Stakeholder${n}>`);
+          });
+        } else if(mode==='relevance-text'){
+          parts.push('<ResearchQuestion>');
+          parts.push(data.question || '');
+          parts.push('</ResearchQuestion>');
+          parts.push('');
+          parts.push('<RelevanceTable>');
+          parts.push(data.relevance_text || '');
+          parts.push('</RelevanceTable>');
+        } else if(mode==='lit-structure'){
+          parts.push('<ResearchQuestion>');
+          parts.push(data.researchQuestion || '');
+          parts.push('</ResearchQuestion>');
+          (data.issues || []).forEach((it,i)=>{
+            const n=i+1;
+            parts.push('');
+            parts.push(`<Issue${n}>`);
+            parts.push(`<Title>${it.title || ''}</Title>`);
+            parts.push(`<Explanation>${it.expl || ''}</Explanation>`);
+            parts.push(`</Issue${n}>`);
+          });
+        } else if(mode==='lit-structure-text'){
+          parts.push('<ResearchQuestion>');
+          parts.push(data.researchQuestion || '');
+          parts.push('</ResearchQuestion>');
+          parts.push('');
+          parts.push('<LiteratureReviewStructure>');
+          parts.push(data.ls_text || '');
+          parts.push('</LiteratureReviewStructure>');
+      } else if(mode==='analytical-framework'){
+        parts.push('<ResearchQuestion>');
+        parts.push(data.question || '');
+        parts.push('</ResearchQuestion>');
+        parts.push('');
+        parts.push('<LiteratureReview>');
+        parts.push(data.literature_review || '');
+        parts.push('</LiteratureReview>');
+        parts.push('');
+        parts.push('<AnalyticalFramework>');
+        parts.push(data.framework || '');
+        parts.push('</AnalyticalFramework>');
+      } else if(mode==='analytical-framework-file'){
+        parts.push('<ResearchQuestion>');
+        parts.push(data.question || '');
+        parts.push('</ResearchQuestion>');
+      }
+      return ['<!-- ===== STUDENT INPUT ===== -->','',...parts].join('\n');
+    }
+
+    // Lit-structure controls
+    const issuesDiv      = document.getElementById('lit-structure-issues');
+    const addIssueBtn    = document.getElementById('add-issue-btn');
+    const removeIssueBtn = document.getElementById('remove-issue-btn');
+
+    // Relevance stakeholder controls
+    const stakeholdersDiv      = document.getElementById('relevance-stakeholders');
+    const addStakeholderBtn    = document.getElementById('add-stakeholder-btn');
+    const removeStakeholderBtn = document.getElementById('remove-stakeholder-btn');
+
+    function showSection(key) {
+      clearErrors();
+      Object.entries(sections).forEach(([k,el])=> el.classList.toggle('hidden', k!==key));
+      resultDiv.textContent='';
+      resultDiv.classList.add('hidden');
+      if(key==='formal-aspects') {
+        submitBtn.classList.add('hidden');
+        copyBtn.classList.remove('hidden');
+      } else {
+        submitBtn.classList.remove('hidden');
+        copyBtn.classList.add('hidden');
+      }
+    }
+    modeSelect.addEventListener('change', ()=> showSection(modeSelect.value));
+    showSection(modeSelect.value);
+
+    // Counters
+      [['title',500],['research-question',500],['relevance-rq',500],['relevance-text',50000],['lit-structure-rq',500],['lit-structure-text',50000],['analytical-framework-rq',500],['analytical-framework-lit-review',50000],['analytical-framework',50000]].forEach(([id,max])=>{
+        const el=document.getElementById(id), cnt=document.getElementById(id+'-count');
+        if(el&&cnt) el.addEventListener('input',()=>cnt.textContent = `${el.value.length} / ${max}`);
+      });
+
+    // Lit-Structure add/remove
+    function updateRemoveBtn(){ removeIssueBtn.classList.toggle('hidden', issuesDiv.children.length <=3); }
+    function renumberIssues(){ Array.from(issuesDiv.children).forEach((w,i)=>{ w.querySelector('label:nth-of-type(1)').textContent = `Issue ${i+1}: Title`; w.querySelector('label:nth-of-type(2)').textContent = `Issue ${i+1}: Explanation / Purpose`; }); }
+    function addIssue(){ const num = issuesDiv.children.length+1; const w=document.createElement('div'); w.className='space-y-2 border-t pt-4'; const l1=document.createElement('label');l1.className='block font-medium';l1.textContent=`Issue ${num}: Title`; const i1=document.createElement('input');i1.type='text';i1.maxLength=500; i1.required=true; i1.className='input-field w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500'; const c1=document.createElement('div');c1.className='char-count text-gray-500';c1.textContent='0 / 500';i1.addEventListener('input',()=>c1.textContent=`${i1.value.length} / ${i1.maxLength}`); const l2=document.createElement('label');l2.className='block font-medium';l2.textContent=`Issue ${num}: Explanation / Purpose`; const i2=document.createElement('textarea');i2.rows=4;i2.maxLength=5000;i2.required=true;i2.className='input-field w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500'; const c2=document.createElement('div');c2.className='char-count text-gray-500';c2.textContent='0 / 5000';i2.addEventListener('input',()=>c2.textContent=`${i2.value.length} / ${i2.maxLength}`); w.append(l1,i1,c1,l2,i2,c2); issuesDiv.appendChild(w); updateRemoveBtn(); }
+    function removeIssue(){ if(issuesDiv.children.length>3){ issuesDiv.removeChild(issuesDiv.lastChild); renumberIssues(); updateRemoveBtn(); }}
+    addIssueBtn.addEventListener('click', addIssue);
+    removeIssueBtn.addEventListener('click', removeIssue);
+    for(let i=0;i<3;i++) addIssue();
+
+    // Relevance stakeholder add/remove
+    function updateStakeholderRemoveBtn(){ removeStakeholderBtn.classList.toggle('hidden', stakeholdersDiv.children.length <=3); }
+    function renumberStakeholders(){
+      Array.from(stakeholdersDiv.children).forEach((w,i)=>{
+        w.querySelector('label:nth-of-type(1)').textContent = `Stakeholder ${i+1}`;
+      });
+    }
+    function addStakeholder(){
+      const num = stakeholdersDiv.children.length+1;
+      const w = document.createElement('div');
+      w.className = 'space-y-2 border-t pt-4';
+      const l1 = document.createElement('label'); l1.className='block font-medium'; l1.textContent=`Stakeholder ${num}`;
+      const i1 = document.createElement('input'); i1.type='text'; i1.maxLength=500; i1.className='input-field w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500';
+      const c1 = document.createElement('div'); c1.className='char-count text-gray-500'; c1.textContent='0 / 500';
+      i1.addEventListener('input',()=>c1.textContent=`${i1.value.length} / ${i1.maxLength}`);
+      const l2 = document.createElement('label'); l2.className='block font-medium'; l2.textContent='Reasons why they would be interested in the research findings';
+      const t1 = document.createElement('textarea'); t1.rows=3; t1.maxLength=5000; t1.className='input-field w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500';
+      const c2 = document.createElement('div'); c2.className='char-count text-gray-500'; c2.textContent='0 / 5000';
+      t1.addEventListener('input',()=>c2.textContent=`${t1.value.length} / ${t1.maxLength}`);
+      const l3 = document.createElement('label'); l3.className='block font-medium'; l3.textContent='Evidence (data, quotes, references)';
+      const t2 = document.createElement('textarea'); t2.rows=3; t2.maxLength=5000; t2.className='input-field w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500';
+      const c3 = document.createElement('div'); c3.className='char-count text-gray-500'; c3.textContent='0 / 5000';
+      t2.addEventListener('input',()=>c3.textContent=`${t2.value.length} / ${t2.maxLength}`);
+      w.append(l1,i1,c1,l2,t1,c2,l3,t2,c3);
+      stakeholdersDiv.appendChild(w);
+      updateStakeholderRemoveBtn();
+    }
+    function removeStakeholder(){
+      if(stakeholdersDiv.children.length>3){
+        stakeholdersDiv.removeChild(stakeholdersDiv.lastChild);
+        renumberStakeholders();
+        updateStakeholderRemoveBtn();
+      }
+    }
+    addStakeholderBtn.addEventListener('click', addStakeholder);
+    removeStakeholderBtn.addEventListener('click', removeStakeholder);
+    for(let i=0;i<3;i++) addStakeholder();
+
+    // Generate prompt logic
+    async function generatePrompt() {
+      clearErrors();
+      let mode = modeSelect.value;
+      const data = {};
+      let valid = true;
+      if(mode==='rq'){
+        const tEl=document.getElementById('title');
+        const qEl=document.getElementById('research-question');
+        data.title=tEl.value.trim();
+        data.question=qEl.value.trim();
+        data.type=document.querySelector('input[name="project-type"]:checked').value;
+        if(!data.title){ showError(tEl); valid=false; }
+        if(!data.question){ showError(qEl); valid=false; }
+        if(!valid){ alert('Please provide information in all fields.'); return; }
+        mode = data.type==='term' ? 'rq-term-paper' : 'rq';
+      } else if(mode==='relevance'){
+        const relTextMode = document.querySelector('input[name="relevance-input-mode"]:checked').value === 'text';
+        const rqEl=document.getElementById('relevance-rq');
+        data.question=rqEl.value.trim();
+        if(relTextMode){
+          const txtEl=document.getElementById('relevance-text');
+          data.relevance_text=txtEl.value.trim();
+          if(!data.question){ showError(rqEl); valid=false; }
+          if(!data.relevance_text){ showError(txtEl); valid=false; }
+          if(!valid){ alert('Please provide the research question and the relevance table.'); return; }
+          mode='relevance-text';
+        } else {
+          if(!data.question){ showError(rqEl); }
+          const rawItems=Array.from(stakeholdersDiv.children).map(w=>{
+            const t=w.querySelectorAll('textarea');
+            return {name:w.querySelector('input').value.trim(), reasons:t[0].value.trim(), evidence:t[1].value.trim(), els:[w.querySelector('input'), t[0], t[1]]};
+          });
+          const items=[];
+          for(let i=0;i<rawItems.length;i++){
+            const {name,reasons,evidence,els}=rawItems[i];
+            const vals=[name,reasons,evidence];
+            const filled=vals.filter(v=>v);
+            if(filled.length>0 && filled.length<3){
+              els.forEach((e,j)=>{ if(!vals[j]) showError(e); });
+              valid=false;
+            }
+            if(name||reasons||evidence) items.push({name,reasons,evidence});
+          }
+          if(!data.question || items.length===0) {
+            if(items.length===0 && stakeholdersDiv.children.length>0){
+              const first = stakeholdersDiv.children[0];
+              first.querySelectorAll('.input-field').forEach(showError);
+            }
+            valid=false;
+          }
+          if(!valid){ alert('Please provide the research question and complete stakeholder information.'); return; }
+          data.stakeholders=items;
+        }
+      } else if(mode==='lit-structure'){
+        const lsTextMode = document.querySelector('input[name="ls-input-mode"]:checked').value === 'text';
+        const rqEl=document.getElementById('lit-structure-rq');
+        data.researchQuestion=rqEl.value.trim();
+        if(lsTextMode){
+          const txtEl=document.getElementById('lit-structure-text');
+          data.ls_text=txtEl.value.trim();
+          if(!data.researchQuestion){ showError(rqEl); valid=false; }
+          if(!data.ls_text){ showError(txtEl); valid=false; }
+          if(!valid){ alert('Please provide the research question and the literature review structure.'); return; }
+          mode='lit-structure-text';
+        } else {
+          if(!data.researchQuestion){ showError(rqEl); }
+          const rawItems=Array.from(issuesDiv.children).map(w=>({title:w.querySelector('input').value.trim(), expl:w.querySelector('textarea').value.trim(), els:[w.querySelector('input'), w.querySelector('textarea')]}));
+          const items=[];
+          for(let i=0;i<rawItems.length;i++){
+            const {title,expl,els}=rawItems[i];
+            const vals=[title,expl];
+            if((title && !expl) || (!title && expl)){
+              els.forEach((e,j)=>{ if(!vals[j]) showError(e); });
+              valid=false;
+            }
+            if(title||expl) items.push({title,expl});
+          }
+          if(!data.researchQuestion || items.length===0) {
+            if(items.length===0 && issuesDiv.children.length>0){
+              const first = issuesDiv.children[0];
+              first.querySelectorAll('.input-field').forEach(showError);
+            }
+            valid=false;
+          }
+          if(!valid){ alert('Please provide the research question and complete issue information.'); return; }
+          data.structure=items.map(({title,expl})=>`Issue: ${title}\nExplanation / Purpose: ${expl}`).join('\n\n');
+          data.issues=items;
+        }
+      } else if(mode==='analytical-framework'){
+        const afFile = document.querySelector('input[name="af-input-mode"]:checked').value === 'file';
+        const rqEl=document.getElementById('analytical-framework-rq');
+        data.question=rqEl.value.trim();
+        if(afFile){
+          if(!data.question){ showError(rqEl); alert('Please provide the research question.'); return; }
+          mode='analytical-framework-file';
+        } else {
+          const litEl=document.getElementById('analytical-framework-lit-review');
+          const frEl=document.getElementById('analytical-framework');
+          data.literature_review=litEl.value.trim();
+          data.framework=frEl.value.trim();
+          if(!data.question){ showError(rqEl); }
+          if(!data.literature_review){ showError(litEl); }
+          if(!data.framework){ showError(frEl); }
+          if(!data.question || !data.literature_review || !data.framework){ alert('Please provide information in all fields.'); return; }
+        }
+      } else if(mode==='formal-aspects'){
+        // No additional data required
+      }
+      const tmpl = await loadTemplate(mode);
+      let prompt = fillTemplate(tmpl, data);
+      if(mode !== 'formal-aspects') {
+        prompt += '\n\n' + buildStudentInput(mode, data);
+      }
+      resultDiv.classList.add('hidden');
+      copyBtn.classList.remove('hidden');
+      setTimeout(()=>{
+        resultDiv.textContent = prompt;
+        resultDiv.classList.remove('hidden');
+      },100);
+      return prompt;
+    }
+    submitBtn.addEventListener('click', async () => {
+      const res = await generatePrompt();
+      if(!res) return;
+      statusMsg.textContent = 'New prompt has been generated.';
+      statusMsg.classList.remove('hidden');
+      clearTimeout(statusTimeout);
+      statusTimeout = setTimeout(()=>statusMsg.classList.add('hidden'), 1500);
+    });
+    copyBtn.addEventListener('click', async ()=>{
+      let text = resultDiv.textContent;
+      if(modeSelect.value==='formal-aspects' || !text.trim()) {
+        text = await generatePrompt();
+        if(!text) return;
+      }
+      navigator.clipboard.writeText(text);
+      statusMsg.textContent = 'Prompt has been copied to the clipboard.';
+      statusMsg.classList.remove('hidden');
+      clearTimeout(statusTimeout);
+      statusTimeout = setTimeout(()=>statusMsg.classList.add('hidden'), 1500);
+    });
+  </script>
+</body>
+</html>
